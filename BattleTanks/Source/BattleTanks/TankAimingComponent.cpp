@@ -21,6 +21,7 @@ UTankAimingComponent::UTankAimingComponent()
 void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed)
 {
 	if (!Barrel) { return; }
+	if (!Turret) { return; }
 
 	FVector OutLaunchVelocity;
 	FVector StartLocation = Barrel->GetSocketLocation(FName("Projectile"));
@@ -36,19 +37,13 @@ void UTankAimingComponent::AimAt(FVector HitLocation, float LaunchSpeed)
 		0.f,
 		ESuggestProjVelocityTraceOption::DoNotTrace // Parameter must be present to prevent bug
 	);
-//	auto Time = GetWorld()->GetTimeSeconds();
+
 	if (bHaveAimSolution) 
 	{
 		auto AimDirection = OutLaunchVelocity.GetSafeNormal();
-		//UE_LOG(LogTemp, Warning, TEXT("Aiming at %s"), *AimDirection.ToString());
 		MoveBarrelTowards(AimDirection);
 		MoveTurretTowards(AimDirection);
-		//UE_LOG(LogTemp, Warning, TEXT("%f: Barrel-Elevate Called at speed: %f"), Time, RelativeSpeed);
-		//UE_LOG(LogTemp, Warning, TEXT("%f: Aim solution found"), Time);
 	}
-	else {
-		//UE_LOG(LogTemp, Warning, TEXT("%f: No aim solution found"), Time);
-	}// if no solution found, do nothing
 }
 
 void UTankAimingComponent::MoveBarrelTowards(FVector AimDirection)
@@ -68,17 +63,21 @@ void UTankAimingComponent::MoveTurretTowards(FVector AimDirection)
 	auto AimAsRotator = AimDirection.Rotation();
 	auto DeltaRotator = AimAsRotator - BarrelRotator;
 	auto Time = GetWorld()->GetTimeSeconds();
-	UE_LOG(LogTemp, Warning, TEXT("%f: Moving turret towards %f"), Time, DeltaRotator.Yaw);
+	//UE_LOG(LogTemp, Warning, TEXT("%f: Moving turret towards %f"), Time, DeltaRotator.Yaw);
 
 	Turret->Rotate(DeltaRotator.Yaw);
 }
 
 void UTankAimingComponent::SetBarrelReference(UTankBarrel* BarrelToSet)
 {
-	Barrel = BarrelToSet;
+	if (BarrelToSet) {
+		Barrel = BarrelToSet;
+	}
 }
 
 void UTankAimingComponent::SetTurretReference(UTankTurret* TurretToSet)
 {
-	Turret = TurretToSet;
+	if (TurretToSet) {
+		Turret = TurretToSet;
+	}
 }
