@@ -25,10 +25,17 @@ void UTankAimingComponent::BeginPlay()
 void UTankAimingComponent::TickComponent(float DeltaTime, enum ELevelTick TickType, FActorComponentTickFunction *ThisTickFunction)
 {
 	Super::TickComponent(DeltaTime, TickType, ThisTickFunction);
-	if ((FPlatformTime::Seconds() - LastFireTime) < ReloadTimeInSeconds) {
+
+	if ((FPlatformTime::Seconds() - LastFireTime) < ReloadTimeInSeconds)
+	{
 		FiringState = EFiringState::Reloading;
 	}
-	else {
+	else if (IsBarrelMoving())
+	{
+		FiringState = EFiringState::Aiming;
+	}
+	else
+	{
 		FiringState = EFiringState::Ready;
 	}
 }
@@ -54,14 +61,15 @@ void UTankAimingComponent::AimAt(FVector HitLocation)
 
 	if (bHaveAimSolution) 
 	{
-		auto AimDirection = OutLaunchVelocity.GetSafeNormal();
+		AimDirection = OutLaunchVelocity.GetSafeNormal();
 		MoveBarrelTowards(AimDirection);
 	}
 }
 
 void UTankAimingComponent::MoveBarrelTowards(FVector AimDirection)
 {
-	if (!ensure(Barrel) || !ensure(Turret)) { return; }
+	if (!ensure(Barrel)) { return; }
+	if (!ensure(Turret)) { return; }
 
 	// Work-out difference between current barrel rotation, and AimDirection
 	auto BarrelRotator = Barrel->GetForwardVector().Rotation();
@@ -69,7 +77,20 @@ void UTankAimingComponent::MoveBarrelTowards(FVector AimDirection)
 	auto DeltaRotator = AimAsRotator - BarrelRotator;
 	
 	Barrel->Elevate(DeltaRotator.Pitch);
-	Turret->Rotate(DeltaRotator.Yaw);
+	if (DeltaRotator.Yaw < 180)
+	{
+		Turret->Rotate(DeltaRotator.Yaw);
+	}
+	else
+	{
+		Turret->Rotate(-DeltaRotator.Yaw);
+	}
+}
+
+bool UTankAimingComponent::IsBarrelMoving()
+{
+	if (!ensure(Barrel)) { return false; }
+	return !Barrel->GetForwardVector().Equals(AimDirection, 0.01);
 }
 
 void UTankAimingComponent::Fire() {
@@ -90,6 +111,11 @@ void UTankAimingComponent::Fire() {
 		Projectile->LaunchProjectile(LaunchSpeed);
 		LastFireTime = FPlatformTime::Seconds();
 	}
+}
+
+EFiringState UTankAimingComponent::GetFiringState() const
+{
+	return FiringState;
 }
 
 void UTankAimingComponent::Initialize(UTankBarrel* BarrelToSet, UTankTurret* TurretToSet)
