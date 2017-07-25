@@ -12,7 +12,8 @@ enum class EFiringState : uint8
 {
 	Reloading,
 	Aiming,
-	Ready
+	Ready,
+	OutOfAmmo
 };
 
 class AProjectile;
@@ -39,9 +40,14 @@ public:
 
 	EFiringState GetFiringState() const;
 
+	int32 GetRoundsLeft() const;
+
 protected:
 	UPROPERTY(BlueprintReadOnly, Category = "State")
 	EFiringState FiringState = EFiringState::Reloading;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Firing")
+	int32 AmmoRemaining = 10;
 
 private:
 	virtual void BeginPlay() override;
