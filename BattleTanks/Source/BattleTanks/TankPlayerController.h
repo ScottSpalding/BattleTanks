@@ -19,6 +19,11 @@ class BATTLETANKS_API ATankPlayerController : public APlayerController
 public:
 	void BeginPlay() override;
 
+	virtual void SetPawn(APawn* InPawn) override;
+
+	UFUNCTION()
+	void ProcessPossessedTankDeath();
+
 	// Start the tank moving the barrel so the shot will hit where the
 	// crosshair intersects the world
 	void AimTowardsCrosshair();
