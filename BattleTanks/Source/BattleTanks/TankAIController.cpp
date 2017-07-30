@@ -15,20 +15,19 @@ void ATankAIController::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
-	auto PlayerPawn = GetWorld()->GetFirstPlayerController()->GetPawn();
-	auto AimingComponent = GetPawn()->FindComponentByClass<UTankAimingComponent>();
+	auto PlayerTank = GetWorld()->GetFirstPlayerController()->GetPawn();
+	auto ControlledTank = GetPawn();
 
-	if (!ensure(GetPawn()) || !ensure(AimingComponent)) { return; }
+	if (!(PlayerTank && ControlledTank)) { return; }
 
 	// Move towards the player
-	//UE_LOG(LogTemp, Warning, TEXT("Moving toward %f,%f with ar: %f"), PlayerPawn->GetActorLocation().X, PlayerPawn->GetActorLocation().Y, AcceptanceRadius);
-	MoveToActor(PlayerPawn, AcceptanceRadius); // TODO check radius is in centimeters
+	MoveToActor(PlayerTank, AcceptanceRadius); // TODO check radius is in cm
 
 	// Aim towards the player
-	AimingComponent->AimAt(PlayerPawn->GetActorLocation());
+	auto AimingComponent = ControlledTank->FindComponentByClass<UTankAimingComponent>();
+	AimingComponent->AimAt(PlayerTank->GetActorLocation());
 
-	// Fire if ready
-	if (AimingComponent->GetFiringState() == EFiringState::Ready) 
+	if (AimingComponent->GetFiringState() == EFiringState::Ready)
 	{
 		AimingComponent->Fire(); // TODO limit firing rate
 	}
